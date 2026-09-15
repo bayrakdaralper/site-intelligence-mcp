@@ -48,31 +48,49 @@ def _api_key() -> str:
 def _summarize(payload: dict[str, Any]) -> dict[str, Any]:
     """Compact the full response to the fields an agent reasons over.
 
-    The raw payload nests per-metric diagnostic sub-objects that can run to
-    several KB. Tool results are spent directly from the model's context
-    window, so the full response is opt-in via detail="full".
+    Every metric carries a `raw` diagnostic sub-object, and together they are
+    most of the payload's several KB. Tool results are spent directly from the
+    model's context window, so `raw` is dropped here and the untouched response
+    is opt-in via detail="full".
     """
-    metrics = []
+    metrics: list[dict[str, Any]] = []
+    unavailable: list[str] = []
+
     for m in payload.get("metrics", []):
         if not isinstance(m, dict):
             continue
-        metrics.append(
-            {
-                "key": m.get("key"),
-                "score": m.get("score"),
-                "label": m.get("label"),
-            }
-        )
-    return {
+        if m.get("status") != "ok":
+            unavailable.append(m.get("key"))
+            continue
+        entry: dict[str, Any] = {"key": m.get("key"), "value": m.get("value")}
+        # Informational metrics (temperature, humidity, wind) carry a value but
+        # no score — they describe the site without feeding the weighted total.
+        if m.get("score") is not None:
+            entry["score"] = m["score"]
+        metrics.append(entry)
+
+    summary: dict[str, Any] = {
         "score": payload.get("score"),
-        "location": {
-            "lat": payload.get("lat"),
-            "lon": payload.get("lon"),
-            "radius_m": payload.get("radius_m"),
-        },
-        "month": payload.get("month"),
+        "rating": payload.get("rating"),
+        "location": payload.get("location"),
+        "mode": payload.get("mode"),
         "metrics": metrics,
     }
+
+    if unavailable:
+        summary["unavailable_metrics"] = unavailable
+
+    # A cap explains a score the metrics alone would not predict: a site can
+    # rate every signal well and still be held to 35 by the water gate.
+    caps = [
+        {"id": c.get("id"), "limit": c.get("limit")}
+        for c in payload.get("caps_fired", [])
+        if isinstance(c, dict)
+    ]
+    if caps:
+        summary["score_capped_by"] = caps
+
+    return summary
 
 
 @mcp.tool()
@@ -93,6 +111,9 @@ async def site_score(
     Use for site selection and land assessment — agtech, precision agriculture,
     ecological field research, conservation planning, environmental consulting,
     apiculture. Not a weather forecast and not a property-value estimate.
+
+    Each call runs a live satellite computation and takes roughly 25-40 seconds;
+    a smaller radius_m is faster. Prefer one call over several exploratory ones.
 
     Args:
         lat: Latitude, -90 to 90.

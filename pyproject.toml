@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "site-intelligence-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "MCP server for ecological and agricultural land suitability scoring from satellite data — site selection for agtech, conservation, environmental consulting and apiculture."
 readme = "README.md"
 requires-python = ">=3.10"
