@@ -1,5 +1,7 @@
 # Site Intelligence MCP
 
+<!-- mcp-name: io.github.bayrakdaralper/site-intelligence-mcp -->
+
 Score any geographic coordinate for **ecological and agricultural land suitability**, directly from your AI coding agent.
 
 Analyses satellite and climate data around a point and returns a weighted suitability score with a per-metric breakdown: vegetation health, water access, precipitation, terrain, cropland proximity, urbanisation pressure, climate, and distance to infrastructure.
