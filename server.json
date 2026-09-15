@@ -3,7 +3,7 @@
   "name": "io.github.bayrakdaralper/site-intelligence-mcp",
   "title": "Site Intelligence",
   "description": "Score any coordinate for ecological and agricultural land suitability from satellite data",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "repository": {
     "url": "https://github.com/bayrakdaralper/site-intelligence-mcp",
     "source": "github"
@@ -13,7 +13,7 @@
     {
       "registryType": "pypi",
       "identifier": "site-intelligence-mcp",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "transport": {
         "type": "stdio"
       },

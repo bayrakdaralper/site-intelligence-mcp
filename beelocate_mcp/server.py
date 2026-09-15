@@ -16,7 +16,11 @@ from mcp.server.mcpserver import MCPServer
 RAPIDAPI_HOST = os.environ.get(
     "BEELOCATE_RAPIDAPI_HOST", "site-intelligence-api.p.rapidapi.com"
 )
-REQUEST_TIMEOUT_S = 60.0
+# Warm production calls land around 26-38s; a 58s outlier predates the paid
+# instance and carried a cold start, so it is not the real ceiling. The budget
+# is generous anyway because upstream latency varies with location and radius,
+# and cutting a live computation off early turns a slow answer into a failed one.
+REQUEST_TIMEOUT_S = 120.0
 
 try:
     __version__ = _pkg_version("site-intelligence-mcp")
@@ -112,8 +116,10 @@ async def site_score(
     ecological field research, conservation planning, environmental consulting,
     apiculture. Not a weather forecast and not a property-value estimate.
 
-    Each call runs a live satellite computation and takes roughly 25-40 seconds;
-    a smaller radius_m is faster. Prefer one call over several exploratory ones.
+    Each call runs a live satellite computation and typically takes 25-40 seconds,
+    occasionally longer; a smaller radius_m is faster. Prefer one call over several
+    exploratory ones, and tell the user the wait is expected rather than letting it
+    look like a hang.
 
     Args:
         lat: Latitude, -90 to 90.
